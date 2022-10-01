@@ -51,9 +51,18 @@ class ObjectPool:
     def predict(self, next_t, vehicle_data: VehicleData):
         """ Kinematics """
         self.delta_t = next_t - self.t
+        delta_fi = self.delta_t * vehicle_data.yaw_rate
         for obj in self.list:
-            obj.dx += (obj.vx * self.delta_t + vehicle_data.yaw_rate * obj.dy * self.delta_t)
-            obj.dy += (obj.vy * self.delta_t - vehicle_data.yaw_rate * obj.dx * self.delta_t)
+            """ Coordinate Transformation"""
+            obj.dx = obj.dx * math.cos(delta_fi) + obj.dy * math.sin(delta_fi)
+            obj.dy = obj.dy * math.cos(delta_fi) - obj.dx * math.sin(delta_fi)
+            obj.vx = obj.vx * math.cos(delta_fi) + obj.vy * math.sin(delta_fi)
+            obj.vy = obj.vy * math.cos(delta_fi) - obj.vx * math.sin(delta_fi)
+            obj.ax = obj.ax * math.cos(delta_fi) + obj.ay * math.sin(delta_fi)
+            obj.ay = obj.ay * math.cos(delta_fi) - obj.ax * math.sin(delta_fi)
+            """ Increments """
+            obj.dx += obj.vx * self.delta_t
+            obj.dy += obj.vy * self.delta_t
             obj.vx += obj.ax * self.delta_t
             obj.vy += obj.ay * self.delta_t
         self.t = next_t
