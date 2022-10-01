@@ -181,4 +181,25 @@ def read_all_dataset_from_csv(data_folder_path):
                                     data_folder_path+"/Group_343.csv")
     return sd, vd, gd
 
-read_all_dataset_from_csv("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4")
+
+
+# Splits the dataset and write it out .CSV for testing
+def split_dataset(data_folder_path, output_folder_path, begin_index, end_index):
+    df = pd.read_csv(data_folder_path+"/Group_349.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_349.csv", sep=',', index=False)
+    
+    df = pd.read_csv(data_folder_path+"/Group_416.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_416.csv", sep=',', index=False)
+    
+    df = pd.read_csv(data_folder_path+"/Group_340.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_340.csv", sep=',', index=False)
+    
+    df = pd.read_csv(data_folder_path+"/Group_342.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_342.csv", sep=',', index=False)
+    
+    df = pd.read_csv(data_folder_path+"/Group_343.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_343.csv", sep=',', index=False)
+    
+
+#read_all_dataset_from_csv("dataset/test")
+#split_dataset("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4", "dataset/test",0, 3000)
