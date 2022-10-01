@@ -6,14 +6,42 @@ data_handler.py
 
 """
 
+
 import pandas as pd
 from model import *
 from column_index_macros import *
 
+CAMERA_OBJ_MAX_SIZE = 15
+RADAR_SIZE = 4
+RADAR_OBJ_MAX_SIZE = 10
+RADAR_PROB_OBSTACLE_THRESHOLD = 0.05
+
+
+def filter_camera_data(row, obj_id, camera_dataset):
+    if row[CAM_0_OBJ + obj_id] != ObjType.NONE.value:
+        camera_dataset.append(CameraData(dx=row[CAM_0_DX + obj_id], dy=row[CAM_0_DY + obj_id],
+                                         vx=row[CAM_0_VX + obj_id], vy=row[CAM_0_VY + obj_id], type=row[CAM_0_OBJ + obj_id]))
+    return camera_dataset
+
+
+def filter_radar_data(row, radar_id, obj_id, radar_dataset):
+    if row[RADAR_0_0_PROB + radar_id + obj_id * RADAR_SIZE] > RADAR_PROB_OBSTACLE_THRESHOLD:
+        radar_dataset.append(CornerData(
+            dx=row[RADAR_0_0_DX + radar_id + obj_id * RADAR_SIZE],
+            dy=row[RADAR_0_0_DY + radar_id + obj_id * RADAR_SIZE],
+            vx=row[RADAR_0_0_VX + radar_id + obj_id * RADAR_SIZE],
+            vy=row[RADAR_0_0_VY + radar_id + obj_id * RADAR_SIZE],
+            ax=row[RADAR_0_0_AX + radar_id + obj_id * RADAR_SIZE],
+            ay=row[RADAR_0_0_AY + radar_id + obj_id * RADAR_SIZE],
+            prob=row[RADAR_0_0_PROB + radar_id + obj_id * RADAR_SIZE]))
+
+    return radar_dataset
+
+
 
 # Reads and converts given path .CSV for SensorData class list
 def sensor_model_dataset_from_csv(path):
-    
+
     # Read .CSV to pandas dataframe
     df = pd.read_csv(path)
 
@@ -21,90 +49,64 @@ def sensor_model_dataset_from_csv(path):
 
     # Iterate throw the rows of the dataframe
     for index, row in df.iterrows():
-        # Create CameraData[15] list
-        camera_dataset = \
-        [
-            CameraData(dx=row[CAM_0_DX], dy=row[CAM_0_DY], vx=row[CAM_0_VX], vy=row[CAM_0_VY], type=row[CAM_0_OBJ]),
-            CameraData(dx=row[CAM_1_DX], dy=row[CAM_1_DY], vx=row[CAM_1_VX], vy=row[CAM_1_VY], type=row[CAM_1_OBJ]),
-            CameraData(dx=row[CAM_2_DX], dy=row[CAM_2_DY], vx=row[CAM_2_VX], vy=row[CAM_2_VY], type=row[CAM_2_OBJ]),
-            CameraData(dx=row[CAM_3_DX], dy=row[CAM_3_DY], vx=row[CAM_3_VX], vy=row[CAM_3_VY], type=row[CAM_3_OBJ]),
-            CameraData(dx=row[CAM_4_DX], dy=row[CAM_4_DY], vx=row[CAM_4_VX], vy=row[CAM_4_VY], type=row[CAM_4_OBJ]),
-            CameraData(dx=row[CAM_5_DX], dy=row[CAM_5_DY], vx=row[CAM_5_VX], vy=row[CAM_5_VY], type=row[CAM_5_OBJ]),
-            CameraData(dx=row[CAM_6_DX], dy=row[CAM_6_DY], vx=row[CAM_6_VX], vy=row[CAM_6_VY], type=row[CAM_6_OBJ]),
-            CameraData(dx=row[CAM_7_DX], dy=row[CAM_7_DY], vx=row[CAM_7_VX], vy=row[CAM_7_VY], type=row[CAM_7_OBJ]),
-            CameraData(dx=row[CAM_8_DX], dy=row[CAM_8_DY], vx=row[CAM_8_VX], vy=row[CAM_8_VY], type=row[CAM_8_OBJ]),
-            CameraData(dx=row[CAM_9_DX], dy=row[CAM_9_DY], vx=row[CAM_9_VX], vy=row[CAM_9_VY], type=row[CAM_9_OBJ]),
-            CameraData(dx=row[CAM_10_DX], dy=row[CAM_10_DY], vx=row[CAM_10_VX], vy=row[CAM_10_VY], type=row[CAM_10_OBJ]),
-            CameraData(dx=row[CAM_11_DX], dy=row[CAM_11_DY], vx=row[CAM_11_VX], vy=row[CAM_11_VY], type=row[CAM_11_OBJ]),
-            CameraData(dx=row[CAM_12_DX], dy=row[CAM_12_DY], vx=row[CAM_12_VX], vy=row[CAM_12_VY], type=row[CAM_12_OBJ]),
-            CameraData(dx=row[CAM_13_DX], dy=row[CAM_13_DY], vx=row[CAM_13_VX], vy=row[CAM_13_VY], type=row[CAM_13_OBJ]),
-            CameraData(dx=row[CAM_14_DX], dy=row[CAM_14_DY], vx=row[CAM_14_VX], vy=row[CAM_14_VY], type=row[CAM_14_OBJ])
-        ]
+        # Create CameraData[max(15)] list
+        camera_dataset = []
 
-        # Create CornerData[4][10] 2D list
-        corner_dataset = \
-        [
-            [
-                CornerData(dx=row[RADAR_0_0_DX], dy=row[RADAR_0_0_DY], vx=row[RADAR_0_0_VX], vy=row[RADAR_0_0_VY], ax=row[RADAR_0_0_AX], ay=row[RADAR_0_0_AY], prob=row[RADAR_0_0_PROB]),
-                CornerData(dx=row[RADAR_0_1_DX], dy=row[RADAR_0_1_DY], vx=row[RADAR_0_1_VX], vy=row[RADAR_0_1_VY], ax=row[RADAR_0_1_AX], ay=row[RADAR_0_1_AY], prob=row[RADAR_0_1_PROB]),
-                CornerData(dx=row[RADAR_0_2_DX], dy=row[RADAR_0_2_DY], vx=row[RADAR_0_2_VX], vy=row[RADAR_0_2_VY], ax=row[RADAR_0_2_AX], ay=row[RADAR_0_2_AY], prob=row[RADAR_0_2_PROB]),
-                CornerData(dx=row[RADAR_0_3_DX], dy=row[RADAR_0_3_DY], vx=row[RADAR_0_3_VX], vy=row[RADAR_0_3_VY], ax=row[RADAR_0_3_AX], ay=row[RADAR_0_3_AY], prob=row[RADAR_0_3_PROB]),
-                CornerData(dx=row[RADAR_0_4_DX], dy=row[RADAR_0_4_DY], vx=row[RADAR_0_4_VX], vy=row[RADAR_0_4_VY], ax=row[RADAR_0_4_AX], ay=row[RADAR_0_4_AY], prob=row[RADAR_0_4_PROB]),
-                CornerData(dx=row[RADAR_0_5_DX], dy=row[RADAR_0_5_DY], vx=row[RADAR_0_5_VX], vy=row[RADAR_0_5_VY], ax=row[RADAR_0_5_AX], ay=row[RADAR_0_5_AY], prob=row[RADAR_0_5_PROB]),
-                CornerData(dx=row[RADAR_0_6_DX], dy=row[RADAR_0_6_DY], vx=row[RADAR_0_6_VX], vy=row[RADAR_0_6_VY], ax=row[RADAR_0_6_AX], ay=row[RADAR_0_6_AY], prob=row[RADAR_0_6_PROB]),
-                CornerData(dx=row[RADAR_0_7_DX], dy=row[RADAR_0_7_DY], vx=row[RADAR_0_7_VX], vy=row[RADAR_0_7_VY], ax=row[RADAR_0_7_AX], ay=row[RADAR_0_7_AY], prob=row[RADAR_0_7_PROB]),
-                CornerData(dx=row[RADAR_0_8_DX], dy=row[RADAR_0_8_DY], vx=row[RADAR_0_8_VX], vy=row[RADAR_0_8_VY], ax=row[RADAR_0_8_AX], ay=row[RADAR_0_8_AY], prob=row[RADAR_0_8_PROB]),
-                CornerData(dx=row[RADAR_0_9_DX], dy=row[RADAR_0_9_DY], vx=row[RADAR_0_9_VX], vy=row[RADAR_0_9_VY], ax=row[RADAR_0_9_AX], ay=row[RADAR_0_9_AY], prob=row[RADAR_0_9_PROB])
-            ],
-            [
-                CornerData(dx=row[RADAR_1_0_DX], dy=row[RADAR_1_0_DY], vx=row[RADAR_1_0_VX], vy=row[RADAR_1_0_VY], ax=row[RADAR_1_0_AX], ay=row[RADAR_1_0_AY], prob=row[RADAR_1_0_PROB]),
-                CornerData(dx=row[RADAR_1_1_DX], dy=row[RADAR_1_1_DY], vx=row[RADAR_1_1_VX], vy=row[RADAR_1_1_VY], ax=row[RADAR_1_1_AX], ay=row[RADAR_1_1_AY], prob=row[RADAR_1_1_PROB]),
-                CornerData(dx=row[RADAR_1_2_DX], dy=row[RADAR_1_2_DY], vx=row[RADAR_1_2_VX], vy=row[RADAR_1_2_VY], ax=row[RADAR_1_2_AX], ay=row[RADAR_1_2_AY], prob=row[RADAR_1_2_PROB]),
-                CornerData(dx=row[RADAR_1_3_DX], dy=row[RADAR_1_3_DY], vx=row[RADAR_1_3_VX], vy=row[RADAR_1_3_VY], ax=row[RADAR_1_3_AX], ay=row[RADAR_1_3_AY], prob=row[RADAR_1_3_PROB]),
-                CornerData(dx=row[RADAR_1_4_DX], dy=row[RADAR_1_4_DY], vx=row[RADAR_1_4_VX], vy=row[RADAR_1_4_VY], ax=row[RADAR_1_4_AX], ay=row[RADAR_1_4_AY], prob=row[RADAR_1_4_PROB]),
-                CornerData(dx=row[RADAR_1_5_DX], dy=row[RADAR_1_5_DY], vx=row[RADAR_1_5_VX], vy=row[RADAR_1_5_VY], ax=row[RADAR_1_5_AX], ay=row[RADAR_1_5_AY], prob=row[RADAR_1_5_PROB]),
-                CornerData(dx=row[RADAR_1_6_DX], dy=row[RADAR_1_6_DY], vx=row[RADAR_1_6_VX], vy=row[RADAR_1_6_VY], ax=row[RADAR_1_6_AX], ay=row[RADAR_1_6_AY], prob=row[RADAR_1_6_PROB]),
-                CornerData(dx=row[RADAR_1_7_DX], dy=row[RADAR_1_7_DY], vx=row[RADAR_1_7_VX], vy=row[RADAR_1_7_VY], ax=row[RADAR_1_7_AX], ay=row[RADAR_1_7_AY], prob=row[RADAR_1_7_PROB]),
-                CornerData(dx=row[RADAR_1_8_DX], dy=row[RADAR_1_8_DY], vx=row[RADAR_1_8_VX], vy=row[RADAR_1_8_VY], ax=row[RADAR_1_8_AX], ay=row[RADAR_1_8_AY], prob=row[RADAR_1_8_PROB]),
-                CornerData(dx=row[RADAR_1_9_DX], dy=row[RADAR_1_9_DY], vx=row[RADAR_1_9_VX], vy=row[RADAR_1_9_VY], ax=row[RADAR_1_9_AX], ay=row[RADAR_1_9_AY], prob=row[RADAR_1_9_PROB])
-            ],
-            [
-                CornerData(dx=row[RADAR_2_0_DX], dy=row[RADAR_2_0_DY], vx=row[RADAR_2_0_VX], vy=row[RADAR_2_0_VY], ax=row[RADAR_2_0_AX], ay=row[RADAR_2_0_AY], prob=row[RADAR_2_0_PROB]),
-                CornerData(dx=row[RADAR_2_1_DX], dy=row[RADAR_2_1_DY], vx=row[RADAR_2_1_VX], vy=row[RADAR_2_1_VY], ax=row[RADAR_2_1_AX], ay=row[RADAR_2_1_AY], prob=row[RADAR_2_1_PROB]),
-                CornerData(dx=row[RADAR_2_2_DX], dy=row[RADAR_2_2_DY], vx=row[RADAR_2_2_VX], vy=row[RADAR_2_2_VY], ax=row[RADAR_2_2_AX], ay=row[RADAR_2_2_AY], prob=row[RADAR_2_2_PROB]),
-                CornerData(dx=row[RADAR_2_3_DX], dy=row[RADAR_2_3_DY], vx=row[RADAR_2_3_VX], vy=row[RADAR_2_3_VY], ax=row[RADAR_2_3_AX], ay=row[RADAR_2_3_AY], prob=row[RADAR_2_3_PROB]),
-                CornerData(dx=row[RADAR_2_4_DX], dy=row[RADAR_2_4_DY], vx=row[RADAR_2_4_VX], vy=row[RADAR_2_4_VY], ax=row[RADAR_2_4_AX], ay=row[RADAR_2_4_AY], prob=row[RADAR_2_4_PROB]),
-                CornerData(dx=row[RADAR_2_5_DX], dy=row[RADAR_2_5_DY], vx=row[RADAR_2_5_VX], vy=row[RADAR_2_5_VY], ax=row[RADAR_2_5_AX], ay=row[RADAR_2_5_AY], prob=row[RADAR_2_5_PROB]),
-                CornerData(dx=row[RADAR_2_6_DX], dy=row[RADAR_2_6_DY], vx=row[RADAR_2_6_VX], vy=row[RADAR_2_6_VY], ax=row[RADAR_2_6_AX], ay=row[RADAR_2_6_AY], prob=row[RADAR_2_6_PROB]),
-                CornerData(dx=row[RADAR_2_7_DX], dy=row[RADAR_2_7_DY], vx=row[RADAR_2_7_VX], vy=row[RADAR_2_7_VY], ax=row[RADAR_2_7_AX], ay=row[RADAR_2_7_AY], prob=row[RADAR_2_7_PROB]),
-                CornerData(dx=row[RADAR_2_8_DX], dy=row[RADAR_2_8_DY], vx=row[RADAR_2_8_VX], vy=row[RADAR_2_8_VY], ax=row[RADAR_2_8_AX], ay=row[RADAR_2_8_AY], prob=row[RADAR_2_8_PROB]),
-                CornerData(dx=row[RADAR_2_9_DX], dy=row[RADAR_2_9_DY], vx=row[RADAR_2_9_VX], vy=row[RADAR_2_9_VY], ax=row[RADAR_2_9_AX], ay=row[RADAR_2_9_AY], prob=row[RADAR_2_9_PROB])
-            ],
-            [
-                CornerData(dx=row[RADAR_3_0_DX], dy=row[RADAR_3_0_DY], vx=row[RADAR_3_0_VX], vy=row[RADAR_3_0_VY], ax=row[RADAR_3_0_AX], ay=row[RADAR_3_0_AY], prob=row[RADAR_3_0_PROB]),
-                CornerData(dx=row[RADAR_3_1_DX], dy=row[RADAR_3_1_DY], vx=row[RADAR_3_1_VX], vy=row[RADAR_3_1_VY], ax=row[RADAR_3_1_AX], ay=row[RADAR_3_1_AY], prob=row[RADAR_3_1_PROB]),
-                CornerData(dx=row[RADAR_3_2_DX], dy=row[RADAR_3_2_DY], vx=row[RADAR_3_2_VX], vy=row[RADAR_3_2_VY], ax=row[RADAR_3_2_AX], ay=row[RADAR_3_2_AY], prob=row[RADAR_3_2_PROB]),
-                CornerData(dx=row[RADAR_3_3_DX], dy=row[RADAR_3_3_DY], vx=row[RADAR_3_3_VX], vy=row[RADAR_3_3_VY], ax=row[RADAR_3_3_AX], ay=row[RADAR_3_3_AY], prob=row[RADAR_3_3_PROB]),
-                CornerData(dx=row[RADAR_3_4_DX], dy=row[RADAR_3_4_DY], vx=row[RADAR_3_4_VX], vy=row[RADAR_3_4_VY], ax=row[RADAR_3_4_AX], ay=row[RADAR_3_4_AY], prob=row[RADAR_3_4_PROB]),
-                CornerData(dx=row[RADAR_3_5_DX], dy=row[RADAR_3_5_DY], vx=row[RADAR_3_5_VX], vy=row[RADAR_3_5_VY], ax=row[RADAR_3_5_AX], ay=row[RADAR_3_5_AY], prob=row[RADAR_3_5_PROB]),
-                CornerData(dx=row[RADAR_3_6_DX], dy=row[RADAR_3_6_DY], vx=row[RADAR_3_6_VX], vy=row[RADAR_3_6_VY], ax=row[RADAR_3_6_AX], ay=row[RADAR_3_6_AY], prob=row[RADAR_3_6_PROB]),
-                CornerData(dx=row[RADAR_3_7_DX], dy=row[RADAR_3_7_DY], vx=row[RADAR_3_7_VX], vy=row[RADAR_3_7_VY], ax=row[RADAR_3_7_AX], ay=row[RADAR_3_7_AY], prob=row[RADAR_3_7_PROB]),
-                CornerData(dx=row[RADAR_3_8_DX], dy=row[RADAR_3_8_DY], vx=row[RADAR_3_8_VX], vy=row[RADAR_3_8_VY], ax=row[RADAR_3_8_AX], ay=row[RADAR_3_8_AY], prob=row[RADAR_3_8_PROB]),
-                CornerData(dx=row[RADAR_3_9_DX], dy=row[RADAR_3_9_DY], vx=row[RADAR_3_9_VX], vy=row[RADAR_3_9_VY], ax=row[RADAR_3_9_AX], ay=row[RADAR_3_9_AY], prob=row[RADAR_3_9_PROB])
-            ]    
-        ]
+        # Filter unreal objects, only the real object's data stored
+        for cam_obj_index in range(CAMERA_OBJ_MAX_SIZE):
+            camera_dataset = filter_camera_data(
+                row=row,
+                obj_id=cam_obj_index,
+                camera_dataset=camera_dataset
+            )
 
-        #TODO:: Filter null objects
+        """
+        print(str(row[HOST_TS]))
+        print(len(camera_dataset))
+        for camera_data in camera_dataset:
+            print(camera_data)
+        """
 
-        sensor_dataset.append(SensorData(row[SENSOR_TS],camera_data=camera_dataset, corner_data=corner_dataset))        
+        # Create CornerData[max(4)][max(10)] 2D list
+        corner_dataset = []
 
+        # Filter for obstacles objects, only the higher probability obstace's data stored
+        for radar_index in range(RADAR_SIZE):
+            radar_dataset = []
+            for radar_obj_index in range(RADAR_OBJ_MAX_SIZE):
+                radar_dataset = filter_radar_data(
+                    row=row,
+                    radar_id=radar_index,
+                    obj_id=radar_obj_index,
+                    radar_dataset=radar_dataset
+                )
+            corner_dataset.append(radar_dataset)
+
+        """
+        print(str(row[HOST_TS]))
+        print(len(corner_dataset))
+        for radar_data in corner_dataset:
+            print(len(radar_data))
+            for object_data in radar_data:
+                print(object_data)
+        """
+
+        sensor_dataset.append(
+            SensorData(
+                t=row[SENSOR_TS],
+                camera_data=camera_dataset,
+                corner_data=corner_dataset
+            )
+        )
+
+    print("Sensor dataset finished!")
     return sensor_dataset
 
 
 
 # Reads and converts given path .CSV for VehicleData class list
 def host_vehicle_model_dataset_from_csv(path):
-    
+
     # Read .CSV to pandas dataframe
     df = pd.read_csv(path)
 
@@ -112,16 +114,71 @@ def host_vehicle_model_dataset_from_csv(path):
 
     # Iterate throw the rows of the dataframe
     for index, row in df.iterrows():
-        host_vehicle_dataset.append(VehicleData(t=row[HOST_TS], vx=row[HOST_VX], vy=row[HOST_VY], ax=row[HOST_AX], ay=row[HOST_AY], yaw_rate=row[HOST_YAW]))
+        host_vehicle_dataset.append(VehicleData(
+            t=row[HOST_TS], vx=row[HOST_VX], vy=row[HOST_VY], ax=row[HOST_AX], ay=row[HOST_AY], yaw_rate=row[HOST_YAW]))
         #print(VehicleData(t=row[HOST_TS], vx=row[HOST_VX], vy=row[HOST_VY], ax=row[HOST_AX], ay=row[HOST_AY], yaw_rate=row[HOST_YAW]))
 
+    print("Host vehicle dataset finished!")
     return host_vehicle_dataset
 
 
-"""
-#test
-sd = sensor_model_dataset_from_csv("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4/Group_349.csv")
-sd[-1].print()
 
-#host_vehicle_model_dataset_from_csv("dataset/PSA_ADAS_W3_FC_2022-09-01_15-17_0060.MF4/Group_416.csv")
-"""
+# Reads and converts given path .CSV for GpsData class list
+def gps_model_dataset_from_csv(path_340_mode, path_342_lat, path_343_long):
+
+    # Read gps mode .CSV to pandas dataframe
+    df_mode = pd.read_csv(path_340_mode)
+    df_mode = df_mode.rename(columns={"t": "t_mode"})
+
+    # Read gps long .CSV to pandas dataframe
+    df_long = pd.read_csv(path_343_long)
+    df_long = df_long.rename(columns={"t": "t_long"})
+
+    # Read gps lat .CSV to pandas dataframe
+    df_lat = pd.read_csv(path_342_lat)
+    df_lat = df_lat.rename(columns={"t": "t_lat"})
+
+    # Merge datasets
+    df_merged = pd.concat([df_mode, df_long, df_lat], axis=1)
+
+    gps_dataset = []
+
+
+    # Iterate throw the rows of the dataframe
+    for index, row in df_merged.iterrows():
+        if ((row['Hunter_GPS_Mode'] == 8) or (row['Hunter_GPS_Mode'] == 9)):
+            gps_dataset.append(
+                GpsData(
+                    t=row['t_lat'],
+                    dx=row['Lat_Delta_Distance'],
+                    dy=row['Long_Delta_Distance'],
+                    vx=row['Lat_Delta_Velocity'],
+                    vy=row['Long_Delta_Velocity']
+                )
+            )
+    """
+    for gps_data in gps_dataset:
+        print(gps_data)
+    
+    """
+    
+    print("Gps dataset finished!")
+    return gps_dataset
+
+
+
+# Read all .CSV file
+# The given folder has to contain the following 5 files:
+# Group_340.csv, Group_342.csv, Group_343.csv, Group_349.csv, Group_416.csv
+def read_all_dataset_from_csv(data_folder_path):
+    # Read sensor data
+    sd = sensor_model_dataset_from_csv(data_folder_path+"/Group_349.csv")
+    # Read vehicle data
+    vd = host_vehicle_model_dataset_from_csv(data_folder_path+"/Group_416.csv")
+    # Read GPS data
+    gd = gps_model_dataset_from_csv(data_folder_path+"/Group_340.csv",
+                                    data_folder_path+"/Group_342.csv",
+                                    data_folder_path+"/Group_343.csv")
+    return sd, vd, gd
+
+read_all_dataset_from_csv("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4")
