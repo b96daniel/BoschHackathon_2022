@@ -1,14 +1,14 @@
 import math
-from model import*
+from model import *
 
-#Thresholds
+# Thresholds
 MATCH_DIST_TSH = 0.5
 MATCH_VEL_TSH = 0.5
 
 
 class Object:
-    def init(self, type, dx, dy, vx, vy, ax, ay):
-        self.type = type
+    def __init__(self, object_type, dx, dy, vx, vy, ax, ay):
+        self.type = object_type
         self.dx = dx
         self.dy = dy
         self.vx = vx
@@ -16,47 +16,45 @@ class Object:
         self.ax = ax
         self.ay = ay
 
-class ObjectPool:
-    def init(self):
-        self.list = []
-
-object_pool_list = []
 
 def distance(x1, y1, x2, y2):
     """ Euclidean Distance: """
     d = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
     return d
 
-def match(sensor, object):
-    if (distance(sensor.dx, sensor.dy, object.dx, object.dy) < MATCH_DIST_TSH) \
-    & (distance(sensor.vx, sensor.vy, object.vx, object.vy) < MATCH_VEL_TSH):
+
+def match(sensor, obj):
+    if (distance(sensor.dx, sensor.dy, obj.dx, obj.dy) < MATCH_DIST_TSH) \
+            and (distance(sensor.vx, sensor.vy, obj.vx, obj.vy) < MATCH_VEL_TSH):
+        # TODO: vel?
         return 1
     else:
         return 0
 
-def update(sensor_data: SensorData, objects: ObjectPool):
-    for i, camera in enumerate(sensor_data.camera_data):
-        for j, object in enumerate(objects.list):
-            if match(camera, object):
-                object.dx = camera.dx
-                object.dy = camera.dy
-                object.vx = camera.vx
-                object.vy = camera.vy
+
+def update(sensor_data: SensorData, objects: list[Object]):
+    for camera_obj in sensor_data.camera_data:
+        for obj in objects:
+            if match(camera_obj, obj):
+                obj.dx = camera_obj.dx
+                obj.dy = camera_obj.dy
+                obj.vx = camera_obj.vx
+                obj.vy = camera_obj.vy
             else:
-                objects.list.append(Object(camera.type, camera.dx, camera.dy, camera.vx, camera.vy, 0, 0))
+                objects.append(
+                    Object(camera_obj.type, camera_obj.dx, camera_obj.dy, camera_obj.vx, camera_obj.vy, 0, 0))
 
-    for i, corners in enumerate(sensor_data.corner_data):
-        for i, corner in enumerate(corners):
-            for k, object in enumerate(objects.list):
-                if match(corner, object):
-                    object.dx = corner.dx
-                    object.dy = corner.dy
-                    object.vx = corner.vx
-                    object.vy = corner.vy
-                    object.ax = corner.ax
-                    object.ay = corner.ay                                        
+    for corner in sensor_data.corner_data:
+        for corner_obj in corner:
+            for obj in objects:
+                if match(corner_obj, obj):
+                    obj.dx = corner_obj.dx
+                    obj.dy = corner_obj.dy
+                    obj.vx = corner_obj.vx
+                    obj.vy = corner_obj.vy
+                    obj.ax = corner_obj.ax
+                    obj.ay = corner_obj.ay
                 else:
-                    objects.list.append(Object(corner.type, corner.dx, corner.dy, corner.vx, corner.vy, corner.ax, corner.ay))
-    
-
-
+                    objects.append(
+                        Object(corner_obj.type, corner_obj.dx, corner_obj.dy, corner_obj.vx, corner_obj.vy,
+                               corner_obj.ax, corner_obj.ay))
