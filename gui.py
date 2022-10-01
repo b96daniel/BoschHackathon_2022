@@ -97,7 +97,6 @@ class GUI:
                     """Pause animation"""
                     if self.is_playing:
                         self.is_playing = False
-                        self.detected_objects = []
 
                 if self.reset_btn.rect.collidepoint(mouse_pos):
                     """Reset the animation"""
@@ -116,9 +115,6 @@ class GUI:
 
         current_time = time.time() - self.start_time
 
-        self.dashboard.warn_left = False
-        self.dashboard.warn_right = False
-
         """Update display data"""
         if (self.current_index < len(self.obj_pools)) and current_time >= self.obj_pools[self.current_index].t \
                 and self.is_playing:
@@ -127,6 +123,8 @@ class GUI:
                     break
                 else:
                     self.current_index += 1
+            self.dashboard.warn_left = False
+            self.dashboard.warn_right = False
             self.detected_objects = []
             for obj in self.obj_pools[self.current_index].list:
                 self.detected_objects.append(DetectedObject(self.screen, obj, self.m2px))
@@ -170,15 +168,17 @@ class GUI:
 
         self.front_video.set(cv2.CAP_PROP_POS_MSEC, self.current_timestamp * 1000)
         success, img = self.front_video.read()
-        img = img[0:250, 340:640]
-        shape = img.shape[1::-1]
-        self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 0))
+        if success:
+            img = img[0:250, 340:640]
+            shape = img.shape[1::-1]
+            self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 0))
 
         self.back_video.set(cv2.CAP_PROP_POS_MSEC, self.current_timestamp * 1000)
         success, img = self.back_video.read()
-        img = img[0:250, 0:300]
-        shape = img.shape[1::-1]
-        self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 250 + GUIConstants.BUTTON_MARGIN // 2))
+        if success:
+            img = img[0:250, 0:300]
+            shape = img.shape[1::-1]
+            self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 250 + GUIConstants.BUTTON_MARGIN // 2))
 
         self.clock.tick(120)
         pygame.display.update()

@@ -13,7 +13,7 @@ from data_handler import *
 MATCH_DIST_TSH = 3
 MATCH_VEL_TSH = 5
 FULL_LIFE = 100
-MAX_RANGE = 500
+MAX_RANGE = 100
 DEAD_RANGE = 10
 
 

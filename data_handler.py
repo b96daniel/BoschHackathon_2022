@@ -13,7 +13,7 @@ from column_index_macros import *
 CAMERA_OBJ_MAX_SIZE = 15
 RADAR_SIZE = 4
 RADAR_OBJ_MAX_SIZE = 10
-RADAR_PROB_OBSTACLE_THRESHOLD = 0.05
+RADAR_PROB_OBSTACLE_THRESHOLD = 0.8
 
 
 def filter_camera_data(row, obj_id, camera_dataset):
