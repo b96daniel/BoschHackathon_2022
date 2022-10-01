@@ -4,6 +4,7 @@ from gui_constants import GUIConstants
 from convert import convert_real2px
 from model import ObjType
 
+
 class CarObject:
     """Car object"""
 
@@ -14,15 +15,21 @@ class CarObject:
         self.height = m2px * GUIConstants.CAR_WIDTH_M
         self.image = pygame.transform.scale(pygame.image.load("res/car.png"), (self.width, self.height))
 
+    def draw(self, m2px):
+        """Draws the car on the screen"""
+        self.width = m2px * GUIConstants.CAR_LENGTH_M
+        self.height = m2px * GUIConstants.CAR_WIDTH_M
+        self.image = pygame.transform.scale(pygame.image.load("res/car.png"), (self.width, self.height))
+
         """Car in the coordinate system"""
         temp_top_left = convert_real2px((GUIConstants.X_POSITION_CORNER_RADAR_LEFT_REAR,
                                          GUIConstants.Y_POSITION_CORNER_RADAR_LEFT_REAR), m2px)
-        self.rect = pygame.Rect(temp_top_left[0], temp_top_left[1], self.width, self.height)
+        rect = pygame.Rect(temp_top_left[0], temp_top_left[1], self.width, self.height)
 
         """Left blind spot"""
         temp_top_left = convert_real2px((GUIConstants.LEFT_BLIND_SPOT_X,
                                          GUIConstants.LEFT_BLIND_SPOT_Y), m2px)
-        self.left_bs_rect = pygame.Rect(
+        left_bs_rect = pygame.Rect(
             temp_top_left[0],
             temp_top_left[1],
             GUIConstants.BLIND_SPOT_WIDTH * m2px,
@@ -32,20 +39,18 @@ class CarObject:
         """Right blind spot"""
         temp_top_left = convert_real2px((GUIConstants.RIGHT_BLIND_SPOT_X,
                                          GUIConstants.RIGHT_BLIND_SPOT_Y), m2px)
-        self.right_bs_rect = pygame.Rect(
+        right_bs_rect = pygame.Rect(
             temp_top_left[0],
             temp_top_left[1],
             GUIConstants.BLIND_SPOT_WIDTH * m2px,
             GUIConstants.BLIND_SPOT_HEIGHT * m2px
         )
 
-    def draw(self):
-        """Draws the car on the screen"""
-        pygame.draw.rect(self.screen, Colors.BS_BACKGROUND, self.left_bs_rect)
-        pygame.draw.rect(self.screen, Colors.BS_BACKGROUND, self.right_bs_rect)
-        pygame.draw.rect(self.screen, Colors.BS_BORDER, self.left_bs_rect, 1)
-        pygame.draw.rect(self.screen, Colors.BS_BORDER, self.right_bs_rect, 1)
-        self.screen.blit(self.image, self.rect)
+        pygame.draw.rect(self.screen, Colors.BS_BACKGROUND, left_bs_rect)
+        pygame.draw.rect(self.screen, Colors.BS_BACKGROUND, right_bs_rect)
+        pygame.draw.rect(self.screen, Colors.BS_BORDER, left_bs_rect, 1)
+        pygame.draw.rect(self.screen, Colors.BS_BORDER, right_bs_rect, 1)
+        self.screen.blit(self.image, rect)
 
 
 class DashboardObject:
@@ -88,6 +93,7 @@ class DashboardObject:
 
 class DetectedObject:
     """Detected object"""
+
     def __init__(self, screen, obj, m2px):
         self.screen = screen
         self.object = obj
@@ -110,7 +116,7 @@ class DetectedObject:
         elif self.object.type == ObjType.PEDESTRIAN.value:
             color = Colors.PEDESTRIAN_COLOR
         pygame.draw.circle(self.screen, color, self.gui_pos, radius=10)
-        self.draw_text(self.gui_pos[0], self.gui_pos[1], str((round(self.real_pos[0], 2), round(self.real_pos[1], 2))))
+        # self.draw_text(self.gui_pos[0], self.gui_pos[1], str((round(self.real_pos[0], 2), round(self.real_pos[1], 2))))
 
     def draw_text(self, x, y, msg):
         """Draws a message into the cell"""

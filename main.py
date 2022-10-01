@@ -4,7 +4,7 @@ import copy
 
 if __name__ == '__main__':
     # Load Data
-    sensor_dataset, host_vehicle_dataset, adma_dataset = read_all_dataset_from_csv("dataset/PSA_ADAS_W3_FC_2022-09-01_15-12_0059.MF4")
+    sensor_dataset, host_vehicle_dataset, adma_dataset = read_all_dataset_from_csv("dataset/test")
 
     # Initialize
     sensor_data = sensor_dataset[0]
