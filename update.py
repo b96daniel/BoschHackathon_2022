@@ -1,3 +1,4 @@
+import copy
 import math
 from model import *
 from data_handler import *
@@ -10,10 +11,10 @@ from data_handler import *
 # MATCH_VEL_TSH = 0.5
 # FULL_LIFE = 10
 # MAX_RANGE = 500
-MATCH_DIST_TSH = 3
-MATCH_VEL_TSH = 5
+MATCH_DIST_TSH = 10
+MATCH_VEL_TSH = 100
 FULL_LIFE = 100
-MAX_RANGE = 100
+MAX_RANGE = 50
 DEAD_RANGE = 10
 
 
@@ -76,8 +77,7 @@ def distance(x1, y1, x2, y2):
 
 
 def match(sensor, obj):
-    if distance(sensor.dx, sensor.dy, obj.dx, obj.dy) < MATCH_DIST_TSH and \
-            distance(sensor.vx, sensor.vy, obj.vx, obj.vy) < MATCH_VEL_TSH:
+    if distance(sensor.dx, sensor.dy, obj.dx, obj.dy) < MATCH_DIST_TSH:
         # TODO: vel?
         return 1
     else:
@@ -86,42 +86,75 @@ def match(sensor, obj):
 
 def update(sensor_data: SensorData, objects: ObjectPool):
     objects.t = sensor_data.t
+    objects_copy = copy.deepcopy(objects.list)
 
-    """Check camera objects"""
-    for camera_obj in sensor_data.camera_data:
-        matched = False
-        for obj in objects.list:
-            if match(camera_obj, obj):
-                obj.dx = camera_obj.dx
-                obj.dy = camera_obj.dy
-                obj.vx = camera_obj.vx
-                obj.vy = camera_obj.vy
-                obj.life = FULL_LIFE
-                matched = True
-                break
-        if not matched:
-            objects.list.append(
-                Object(camera_obj.type, camera_obj.dx, camera_obj.dy, camera_obj.vx, camera_obj.vy, 0, 0))
+    for i, obj in enumerate(objects_copy):
+        for corner in sensor_data.corner_data:
+            match_list = []
+            for corner_obj in corner:
+                if match(corner_obj, obj):
+                    match_list.append(corner_obj)
+
+            if match_list:
+                min_index = 0
+                min_dist = 100000
+                for j, corner_data in enumerate(match_list):
+                    d = distance(corner_data.dx, corner_data.dy, obj.dx, obj.dy)
+                    if d < min_dist:
+                        min_index = j
+                        min_dist = d
+                objects.list[i].dx = match_list[min_index].dx
+                objects.list[i].dy = match_list[min_index].dy
+                objects.list[i].vx = match_list[min_index].vx
+                objects.list[i].vy = match_list[min_index].vy
+                objects.list[i].ax = match_list[min_index].ax
+                objects.list[i].ay = match_list[min_index].ay
+                objects.list[i].life = FULL_LIFE
 
     """Check corner data objects"""
     for corner in sensor_data.corner_data:
         for corner_obj in corner:
             matched = False
-            for obj in objects.list:
+            for obj in objects_copy:
                 if match(corner_obj, obj):
-                    obj.dx = corner_obj.dx
-                    obj.dy = corner_obj.dy
-                    obj.vx = corner_obj.vx
-                    obj.vy = corner_obj.vy
-                    obj.ax = corner_obj.ax
-                    obj.ay = corner_obj.ay
-                    obj.life = FULL_LIFE
                     matched = True
                     break
             if not matched:
                 objects.list.append(
                     Object(None, corner_obj.dx, corner_obj.dy, corner_obj.vx, corner_obj.vy,
                            corner_obj.ax, corner_obj.ay))
+
+    for i, obj in enumerate(objects_copy):
+        match_list = []
+        for camera_obj in sensor_data.camera_data:
+            if match(camera_obj, obj):
+                match_list.append(camera_obj)
+
+        if match_list:
+            min_index = 0
+            min_dist = 100000
+            for j, cam_data in enumerate(match_list):
+                d = distance(cam_data.dx, cam_data.dy, obj.dx, obj.dy)
+                if d < min_dist:
+                    min_index = j
+                    min_dist = d
+            objects.list[i].type = match_list[min_index].type
+            objects.list[i].dx = match_list[min_index].dx
+            objects.list[i].dy = match_list[min_index].dy
+            objects.list[i].vx = match_list[min_index].vx
+            objects.list[i].vy = match_list[min_index].vy
+            objects.list[i].life = FULL_LIFE
+
+    """Check camera objects"""
+    for camera_obj in sensor_data.camera_data:
+        matched = False
+        for obj in objects_copy:
+            if match(camera_obj, obj):
+                matched = True
+                break
+        if not matched:
+            objects.list.append(
+                Object(camera_obj.type, camera_obj.dx, camera_obj.dy, camera_obj.vx, camera_obj.vy, 0, 0))
 
     # TODO: Time instead of cycle
     for obj in objects.list:
