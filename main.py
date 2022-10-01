@@ -4,7 +4,7 @@ import copy
 
 if __name__ == '__main__':
     # Load Data
-    sensor_dataset, host_vehicle_dataset, adma_dataset = read_all_dataset_from_csv("dataset/test")
+    sensor_dataset, host_vehicle_dataset, adma_dataset = read_all_dataset_from_csv("dataset/PSA_ADAS_W3_FC_2022-09-01_15-12_0059.MF4")
 
     # Initialize
     sensor_data = sensor_dataset[0]
@@ -19,9 +19,6 @@ if __name__ == '__main__':
         object_pool.predict(next_t, vehicle_data)
         object_pool.kill()
         object_pool_list.append(copy.deepcopy(object_pool))
-
-    for pool in object_pool_list:
-        print(len(pool.list))
 
     try:
         gui = GUI(object_pool_list, adma_dataset)

@@ -2,7 +2,7 @@ import pygame
 from colors import Colors
 from gui_constants import GUIConstants
 from convert import convert_real2px
-
+from model import ObjType
 
 class CarObject:
     """Car object"""
@@ -88,14 +88,28 @@ class DashboardObject:
 
 class DetectedObject:
     """Detected object"""
-    def __init__(self, screen, real_pos, m2px):
+    def __init__(self, screen, obj, m2px):
         self.screen = screen
-        self.gui_pos = convert_real2px(real_pos, m2px)
-        self.real_pos = real_pos
+        self.object = obj
+        self.gui_pos = convert_real2px((obj.dx, obj.dy), m2px)
+        self.real_pos = (obj.dx, obj.dy)
 
     def draw(self):
         """Draws the object on the screen"""
-        pygame.draw.circle(self.screen, Colors.RED, self.gui_pos, radius=10)
+        color = Colors.RED
+        if self.object.type == ObjType.CAR.value:
+            color = Colors.CAR_COLOR
+        elif self.object.type == ObjType.TRUCK.value:
+            color = Colors.TRUCK_COLOR
+        elif self.object.type == ObjType.CAR_OR_TRUCK.value:
+            color = Colors.CAR_OR_TRUCK_COLOR
+        elif self.object.type == ObjType.BICYCLE.value:
+            color = Colors.BICYCLE_COLOR
+        elif self.object.type == ObjType.MOTORBIKE.value:
+            color = Colors.MOTORBIKE_COLOR
+        elif self.object.type == ObjType.PEDESTRIAN.value:
+            color = Colors.PEDESTRIAN_COLOR
+        pygame.draw.circle(self.screen, color, self.gui_pos, radius=10)
         self.draw_text(self.gui_pos[0], self.gui_pos[1], str((round(self.real_pos[0], 2), round(self.real_pos[1], 2))))
 
     def draw_text(self, x, y, msg):

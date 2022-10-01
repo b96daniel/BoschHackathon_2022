@@ -139,7 +139,7 @@ def gps_model_dataset_from_csv(path_340_mode, path_342_lat, path_343_long):
 
     # Iterate throw the rows of the dataframe
     for index, row in df_merged.iterrows():
-        if ((row['Hunter_GPS_Mode'] == 8) or (row['Hunter_GPS_Mode'] == 9)):
+        if (row['Hunter_GPS_Mode'] == 8) or (row['Hunter_GPS_Mode'] == 9):
             gps_dataset.append(
                 GpsData(
                     t=row['t_lat'],
@@ -190,7 +190,3 @@ def split_dataset(data_folder_path, output_folder_path, begin_index, end_index):
 
     df = pd.read_csv(data_folder_path + "/Group_343.csv")
     df.iloc[begin_index:end_index].to_csv(output_folder_path + "/Group_343.csv", sep=',', index=False)
-
-
-# read_all_dataset_from_csv("dataset/test")
-split_dataset("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4", "dataset/test", 0, 3000)

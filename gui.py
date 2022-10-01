@@ -6,7 +6,7 @@ from gui_constants import GUIConstants
 from button import Button
 from table import Table
 from gui_model import CarObject, DashboardObject, DetectedObject
-M2PX = 50
+M2PX = 5
 
 class GUI:
     def __init__(self, object_pool_list, adma_dataset):
@@ -75,7 +75,7 @@ class GUI:
                 and self.is_playing:
             self.detected_objects = []
             for obj in self.obj_pools[self.current_index].list:
-                self.detected_objects.append(DetectedObject(self.screen, (obj.dx, obj.dy), M2PX))
+                self.detected_objects.append(DetectedObject(self.screen, obj, M2PX))
             self.current_timestamp = self.obj_pools[self.current_index].t
             self.current_index += 1
 
@@ -113,11 +113,16 @@ class GUI:
                     self.current_index = 0
 
         self.car.draw()
+        for detected_obj in self.detected_objects:
+            detected_obj.draw()
+
+        pygame.draw.rect(self.screen, Colors.WHITE, pygame.Rect(0, 500, 1280, 220))
         self.play_btn.draw()
         self.pause_btn.draw()
         self.reset_btn.draw()
         self.data_table.draw()
         # TODO format timestamp
+        # TODO Boundaries
         self.data_table.draw_value(0, 0, self.current_timestamp)
         if self.adma_data is not None:
             self.data_table.draw_value(1, 1, self.adma_data.dx)
@@ -125,8 +130,5 @@ class GUI:
             self.data_table.draw_value(1, 3, self.adma_data.vx)
             self.data_table.draw_value(1, 4, self.adma_data.vy)
         self.dashboard.draw()
-
-        for detected_obj in self.detected_objects:
-            detected_obj.draw()
 
         pygame.display.update()
