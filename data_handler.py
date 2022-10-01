@@ -6,7 +6,6 @@ data_handler.py
 
 """
 
-
 import pandas as pd
 from model import *
 from column_index_macros import *
@@ -20,7 +19,8 @@ RADAR_PROB_OBSTACLE_THRESHOLD = 0.05
 def filter_camera_data(row, obj_id, camera_dataset):
     if row[CAM_0_OBJ + obj_id] != ObjType.NONE.value:
         camera_dataset.append(CameraData(dx=row[CAM_0_DX + obj_id], dy=row[CAM_0_DY + obj_id],
-                                         vx=row[CAM_0_VX + obj_id], vy=row[CAM_0_VY + obj_id], type=row[CAM_0_OBJ + obj_id]))
+                                         vx=row[CAM_0_VX + obj_id], vy=row[CAM_0_VY + obj_id],
+                                         type=row[CAM_0_OBJ + obj_id]))
     return camera_dataset
 
 
@@ -38,10 +38,8 @@ def filter_radar_data(row, radar_id, obj_id, radar_dataset):
     return radar_dataset
 
 
-
 # Reads and converts given path .CSV for SensorData class list
 def sensor_model_dataset_from_csv(path):
-
     # Read .CSV to pandas dataframe
     df = pd.read_csv(path)
 
@@ -103,10 +101,8 @@ def sensor_model_dataset_from_csv(path):
     return sensor_dataset
 
 
-
 # Reads and converts given path .CSV for VehicleData class list
 def host_vehicle_model_dataset_from_csv(path):
-
     # Read .CSV to pandas dataframe
     df = pd.read_csv(path)
 
@@ -116,16 +112,14 @@ def host_vehicle_model_dataset_from_csv(path):
     for index, row in df.iterrows():
         host_vehicle_dataset.append(VehicleData(
             t=row[HOST_TS], vx=row[HOST_VX], vy=row[HOST_VY], ax=row[HOST_AX], ay=row[HOST_AY], yaw_rate=row[HOST_YAW]))
-        #print(VehicleData(t=row[HOST_TS], vx=row[HOST_VX], vy=row[HOST_VY], ax=row[HOST_AX], ay=row[HOST_AY], yaw_rate=row[HOST_YAW]))
+        # print(VehicleData(t=row[HOST_TS], vx=row[HOST_VX], vy=row[HOST_VY], ax=row[HOST_AX], ay=row[HOST_AY], yaw_rate=row[HOST_YAW]))
 
     print("Host vehicle dataset finished!")
     return host_vehicle_dataset
 
 
-
 # Reads and converts given path .CSV for GpsData class list
 def gps_model_dataset_from_csv(path_340_mode, path_342_lat, path_343_long):
-
     # Read gps mode .CSV to pandas dataframe
     df_mode = pd.read_csv(path_340_mode)
     df_mode = df_mode.rename(columns={"t": "t_mode"})
@@ -143,17 +137,16 @@ def gps_model_dataset_from_csv(path_340_mode, path_342_lat, path_343_long):
 
     gps_dataset = []
 
-
     # Iterate throw the rows of the dataframe
     for index, row in df_merged.iterrows():
         if ((row['Hunter_GPS_Mode'] == 8) or (row['Hunter_GPS_Mode'] == 9)):
             gps_dataset.append(
                 GpsData(
                     t=row['t_lat'],
-                    dx=row['Lat_Delta_Distance'],
-                    dy=row['Long_Delta_Distance'],
-                    vx=row['Lat_Delta_Velocity'],
-                    vy=row['Long_Delta_Velocity']
+                    dy=row['Lat_Delta_Distance'],
+                    dx=row['Long_Delta_Distance'],
+                    vy=row['Lat_Delta_Velocity'],
+                    vx=row['Long_Delta_Velocity']
                 )
             )
     """
@@ -161,10 +154,9 @@ def gps_model_dataset_from_csv(path_340_mode, path_342_lat, path_343_long):
         print(gps_data)
     
     """
-    
+
     print("Gps dataset finished!")
     return gps_dataset
-
 
 
 # Read all .CSV file
@@ -172,34 +164,33 @@ def gps_model_dataset_from_csv(path_340_mode, path_342_lat, path_343_long):
 # Group_340.csv, Group_342.csv, Group_343.csv, Group_349.csv, Group_416.csv
 def read_all_dataset_from_csv(data_folder_path):
     # Read sensor data
-    sd = sensor_model_dataset_from_csv(data_folder_path+"/Group_349.csv")
+    sd = sensor_model_dataset_from_csv(data_folder_path + "/Group_349.csv")
     # Read vehicle data
-    vd = host_vehicle_model_dataset_from_csv(data_folder_path+"/Group_416.csv")
+    vd = host_vehicle_model_dataset_from_csv(data_folder_path + "/Group_416.csv")
     # Read GPS data
-    gd = gps_model_dataset_from_csv(data_folder_path+"/Group_340.csv",
-                                    data_folder_path+"/Group_342.csv",
-                                    data_folder_path+"/Group_343.csv")
+    gd = gps_model_dataset_from_csv(data_folder_path + "/Group_340.csv",
+                                    data_folder_path + "/Group_342.csv",
+                                    data_folder_path + "/Group_343.csv")
     return sd, vd, gd
-
 
 
 # Splits the dataset and write it out .CSV for testing
 def split_dataset(data_folder_path, output_folder_path, begin_index, end_index):
-    df = pd.read_csv(data_folder_path+"/Group_349.csv")
-    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_349.csv", sep=',', index=False)
-    
-    df = pd.read_csv(data_folder_path+"/Group_416.csv")
-    df.iloc[begin_index:int(end_index/2)].to_csv(output_folder_path+"/Group_416.csv", sep=',', index=False)
-    
-    df = pd.read_csv(data_folder_path+"/Group_340.csv")
-    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_340.csv", sep=',', index=False)
-    
-    df = pd.read_csv(data_folder_path+"/Group_342.csv")
-    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_342.csv", sep=',', index=False)
-    
-    df = pd.read_csv(data_folder_path+"/Group_343.csv")
-    df.iloc[begin_index:end_index].to_csv(output_folder_path+"/Group_343.csv", sep=',', index=False)
-    
+    df = pd.read_csv(data_folder_path + "/Group_349.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path + "/Group_349.csv", sep=',', index=False)
 
-#read_all_dataset_from_csv("dataset/test")
-split_dataset("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4", "dataset/test",0, 3000)
+    df = pd.read_csv(data_folder_path + "/Group_416.csv")
+    df.iloc[begin_index:int(end_index / 2)].to_csv(output_folder_path + "/Group_416.csv", sep=',', index=False)
+
+    df = pd.read_csv(data_folder_path + "/Group_340.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path + "/Group_340.csv", sep=',', index=False)
+
+    df = pd.read_csv(data_folder_path + "/Group_342.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path + "/Group_342.csv", sep=',', index=False)
+
+    df = pd.read_csv(data_folder_path + "/Group_343.csv")
+    df.iloc[begin_index:end_index].to_csv(output_folder_path + "/Group_343.csv", sep=',', index=False)
+
+
+# read_all_dataset_from_csv("dataset/test")
+split_dataset("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4", "dataset/test", 0, 3000)
