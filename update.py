@@ -14,6 +14,7 @@ MATCH_DIST_TSH = 3
 MATCH_VEL_TSH = 5
 FULL_LIFE = 100
 MAX_RANGE = 500
+DEAD_RANGE = 10
 
 
 class Object:
@@ -43,7 +44,8 @@ class ObjectPool:
     def kill(self):
         """ Remove irrelevant objects """
         for obj in self.list:
-            if obj.is_dead() or distance(obj.dx, obj.dy, 0, 0) > MAX_RANGE:
+            if (obj.is_dead() and distance(obj.dx, obj.dy, 0, 0) > DEAD_RANGE) \
+                    or distance(obj.dx, obj.dy, 0, 0) > MAX_RANGE:
                 self.list.remove(obj)
 
     def predict(self, next_t, vehicle_data: VehicleData):
@@ -116,8 +118,6 @@ def update(sensor_data: SensorData, objects: ObjectPool):
     for obj in objects.list:
         """ Kill expired objects: """
         obj.life -= 1
-        if obj.is_dead():
-            objects.list.remove(obj)
 
 
 def synced_vehicle_data(index, host_vehicle_dataset: list[VehicleData]):
