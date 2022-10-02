@@ -6,20 +6,21 @@ from gui_constants import GUIConstants
 from button import Button
 from table import Table
 from gui_model import CarObject, DashboardObject, DetectedObject
-
+from update import distance
 import cv2
 
 M2PX = 20
 
+
 class GUI:
-    def __init__(self, object_pool_list, adma_dataset):
+    def __init__(self, object_pool_list, adma_dataset, path):
         """Initializes the window of the application and the class variables"""
         pygame.init()
         self.obj_pools = object_pool_list
         self.m2px = M2PX
 
-        self.front_video = cv2.VideoCapture("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.avi")
-        self.back_video = cv2.VideoCapture("dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054_Rear.avi")
+        self.front_video = cv2.VideoCapture(path.split('.')[0] + ".avi")
+        self.back_video = cv2.VideoCapture(path.split('.')[0] + "_Rear.avi")
 
         """Animation variables"""
         self.current_index = 0
@@ -36,12 +37,8 @@ class GUI:
         self.height = self.screen.get_height()
         pygame.display.set_caption(GUIConstants.WINDOW_TITLE)
 
-        # TODO: Coordinate system
-        # TODO: Sensor ranges
-        # TODO: Indicate the type of the object
-        # TODO: Window icon
-        # game_icon = pygame.image.load('res/logo.png')
-        # pygame.display.set_icon(game_icon)
+        game_icon = pygame.image.load('res/logo.png')
+        pygame.display.set_icon(game_icon)
 
         """Init gui objects"""
         """Buttons"""
@@ -70,6 +67,7 @@ class GUI:
 
         self.detected_objects = []
         self.adma_data = None
+        self.adma_car_data = None
 
         self.clock = pygame.time.Clock()
 
@@ -127,12 +125,16 @@ class GUI:
             self.dashboard.warn_right = False
             self.detected_objects = []
             for obj in self.obj_pools[self.current_index].list:
-                self.detected_objects.append(DetectedObject(self.screen, obj, self.m2px))
-                if GUIConstants.LEFT_BLIND_SPOT_X <= obj.dx <= GUIConstants.LEFT_BLIND_SPOT_X + GUIConstants.BLIND_SPOT_WIDTH:
-                    if GUIConstants.LEFT_BLIND_SPOT_Y >= obj.dy >= GUIConstants.LEFT_BLIND_SPOT_Y - GUIConstants.BLIND_SPOT_HEIGHT:
-                        self.dashboard.warn_left = True
-                    if GUIConstants.RIGHT_BLIND_SPOT_Y >= obj.dy >= GUIConstants.RIGHT_BLIND_SPOT_Y - GUIConstants.BLIND_SPOT_HEIGHT:
-                        self.dashboard.warn_right = True
+                if obj.life > 75:
+                    self.detected_objects.append(DetectedObject(self.screen, obj, self.m2px))
+                    if GUIConstants.LEFT_BLIND_SPOT_X <= obj.dx <= GUIConstants.LEFT_BLIND_SPOT_X + GUIConstants.BLIND_SPOT_WIDTH:
+                        if GUIConstants.LEFT_BLIND_SPOT_Y >= obj.dy >= GUIConstants.LEFT_BLIND_SPOT_Y - GUIConstants.BLIND_SPOT_HEIGHT:
+                            self.dashboard.warn_left = True
+                        if GUIConstants.RIGHT_BLIND_SPOT_Y >= obj.dy >= GUIConstants.RIGHT_BLIND_SPOT_Y - GUIConstants.BLIND_SPOT_HEIGHT:
+                            self.dashboard.warn_right = True
+                    if self.adma_data:
+                        if distance(self.adma_data.dx, self.adma_data.dy, obj.dx, obj.dy) < 10:
+                            self.adma_car_data = obj
 
             self.current_timestamp = self.obj_pools[self.current_index].t
             self.current_index += 1
@@ -156,29 +158,38 @@ class GUI:
         self.pause_btn.draw()
         self.reset_btn.draw()
         self.data_table.draw()
-        # TODO format timestamp
-        # TODO Boundaries
-        self.data_table.draw_value(0, 0, self.current_timestamp)
+        self.data_table.draw_text(0, 0, "t=" + str(round(self.current_timestamp, 2)))
         if self.adma_data is not None:
             self.data_table.draw_value(1, 1, self.adma_data.dx)
             self.data_table.draw_value(1, 2, self.adma_data.dy)
             self.data_table.draw_value(1, 3, self.adma_data.vx)
             self.data_table.draw_value(1, 4, self.adma_data.vy)
+        if self.adma_car_data is not None:
+            self.data_table.draw_value(2, 1, self.adma_car_data.dx)
+            self.data_table.draw_value(2, 2, self.adma_car_data.dy)
+            self.data_table.draw_value(2, 3, self.adma_car_data.vx)
+            self.data_table.draw_value(2, 4, self.adma_car_data.vy)
         self.dashboard.draw()
 
-        self.front_video.set(cv2.CAP_PROP_POS_MSEC, self.current_timestamp * 1000)
+        self.front_video.set(cv2.CAP_PROP_POS_MSEC, round(self.current_timestamp * 1000, 0))
         success, img = self.front_video.read()
         if success:
             img = img[0:250, 340:640]
             shape = img.shape[1::-1]
             self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 0))
 
-        self.back_video.set(cv2.CAP_PROP_POS_MSEC, self.current_timestamp * 1000)
+        self.back_video.set(cv2.CAP_PROP_POS_MSEC, round(self.current_timestamp * 1000, 0))
         success, img = self.back_video.read()
         if success:
             img = img[0:250, 0:300]
             shape = img.shape[1::-1]
-            self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 250 + GUIConstants.BUTTON_MARGIN // 2))
+            self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"),
+                             (980, 250 + GUIConstants.BUTTON_MARGIN // 2))
 
+        image = pygame.transform.scale(pygame.image.load("res/obj_colors.png"), (200, 250))
+        self.screen.blit(image, pygame.Rect(0, 0, 200, 250))
+
+        image = pygame.transform.scale(pygame.image.load("res/coordinates.png"), (50, 50))
+        self.screen.blit(image, pygame.Rect(10, 440, 50, 50))
         self.clock.tick(120)
         pygame.display.update()

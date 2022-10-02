@@ -14,8 +14,11 @@ from data_handler import *
 MATCH_DIST_TSH = 10
 MATCH_VEL_TSH = 100
 FULL_LIFE = 100
-MAX_RANGE = 50
-DEAD_RANGE = 10
+MAX_RANGE = 65
+DEAD_RANGE = 6
+
+ESTIMATE_VAR = 1000
+MEASUREMENT_VAR = 100
 
 
 class Object:
@@ -27,7 +30,22 @@ class Object:
         self.vy = vy
         self.ax = ax
         self.ay = ay
-        self.life = FULL_LIFE
+        self.life = FULL_LIFE / 2
+
+    def add_measurement(self, dx, dy, vx, vy, ax=None, ay=None):
+        k = 0.5
+        if ax is None:
+            ax = self.ax
+        if ay is None:
+            ay = self.ay
+
+        self.dx += k * (dx - self.dx)
+        self.dy += k * (dy - self.dy)
+        self.vx += k * (vx - self.vx)
+        self.vy += k * (vy - self.vy)
+        self.ax += k * (ax - self.ax)
+        self.ay += k * (ay - self.ay)
+        self.life += 5
 
     def is_dead(self):
         if self.life <= 0:
@@ -44,9 +62,9 @@ class ObjectPool:
 
     def kill(self):
         """ Remove irrelevant objects """
-        for obj in self.list:
-            if (obj.is_dead() and distance(obj.dx, obj.dy, 0, 0) > DEAD_RANGE) \
-                    or distance(obj.dx, obj.dy, 0, 0) > MAX_RANGE:
+        for i, obj in enumerate(self.list.copy()):
+            if (obj.is_dead() and distance(obj.dx, obj.dy, 0, 0) > DEAD_RANGE) or distance(obj.dx, obj.dy, 0,
+                                                                                           0) > MAX_RANGE:
                 self.list.remove(obj)
 
     def predict(self, next_t, vehicle_data: VehicleData):
@@ -78,7 +96,6 @@ def distance(x1, y1, x2, y2):
 
 def match(sensor, obj):
     if distance(sensor.dx, sensor.dy, obj.dx, obj.dy) < MATCH_DIST_TSH:
-        # TODO: vel?
         return 1
     else:
         return 0
@@ -103,13 +120,19 @@ def update(sensor_data: SensorData, objects: ObjectPool):
                     if d < min_dist:
                         min_index = j
                         min_dist = d
-                objects.list[i].dx = match_list[min_index].dx
-                objects.list[i].dy = match_list[min_index].dy
-                objects.list[i].vx = match_list[min_index].vx
-                objects.list[i].vy = match_list[min_index].vy
-                objects.list[i].ax = match_list[min_index].ax
-                objects.list[i].ay = match_list[min_index].ay
-                objects.list[i].life = FULL_LIFE
+                objects.list[i].add_measurement(match_list[min_index].dx,
+                                                match_list[min_index].dy,
+                                                match_list[min_index].vx,
+                                                match_list[min_index].vy,
+                                                match_list[min_index].ax,
+                                                match_list[min_index].ay)
+                # objects.list[i].dx = match_list[min_index].dx
+                # objects.list[i].dy = match_list[min_index].dy
+                # objects.list[i].vx = match_list[min_index].vx
+                # objects.list[i].vy = match_list[min_index].vy
+                # objects.list[i].ax = match_list[min_index].ax
+                # objects.list[i].ay = match_list[min_index].ay
+                # objects.list[i].life += 5
 
     """Check corner data objects"""
     for corner in sensor_data.corner_data:
@@ -138,12 +161,13 @@ def update(sensor_data: SensorData, objects: ObjectPool):
                 if d < min_dist:
                     min_index = j
                     min_dist = d
+
             objects.list[i].type = match_list[min_index].type
             objects.list[i].dx = match_list[min_index].dx
             objects.list[i].dy = match_list[min_index].dy
             objects.list[i].vx = match_list[min_index].vx
             objects.list[i].vy = match_list[min_index].vy
-            objects.list[i].life = FULL_LIFE
+            objects.list[i].life += 5
 
     """Check camera objects"""
     for camera_obj in sensor_data.camera_data:
@@ -156,12 +180,10 @@ def update(sensor_data: SensorData, objects: ObjectPool):
             objects.list.append(
                 Object(camera_obj.type, camera_obj.dx, camera_obj.dy, camera_obj.vx, camera_obj.vy, 0, 0))
 
-    # TODO: Time instead of cycle
     for obj in objects.list:
         """ Kill expired objects: """
         obj.life -= 1
 
 
 def synced_vehicle_data(index, host_vehicle_dataset: list[VehicleData]):
-    # TODO
     return host_vehicle_dataset[index // 2]
