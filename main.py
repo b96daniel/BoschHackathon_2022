@@ -2,7 +2,7 @@ from gui import GUI
 from update import *
 import copy
 
-DATASET_RELATIVE_PATH = "dataset/PSA_ADAS_W3_FC_2022-09-01_15-12_0059.MF4"
+DATASET_RELATIVE_PATH = "dataset/PSA_ADAS_W3_FC_2022-09-01_14-49_0054.MF4"
 
 if __name__ == '__main__':
     # Load Data
