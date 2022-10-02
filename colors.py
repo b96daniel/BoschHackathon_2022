@@ -1,4 +1,5 @@
 class Colors:
+    """Contains the color constants of the script"""
     WHITE = (255, 255, 255)
     PRIMARY = (75, 162, 198)
     BLACK = (0, 0, 0)

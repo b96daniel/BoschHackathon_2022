@@ -9,6 +9,7 @@ from gui_model import CarObject, DashboardObject, DetectedObject
 from update import distance
 import cv2
 
+"""Initial meter to pixel value"""
 M2PX = 20
 
 
@@ -19,6 +20,7 @@ class GUI:
         self.obj_pools = object_pool_list
         self.m2px = M2PX
 
+        """Videos"""
         self.front_video = cv2.VideoCapture(path.split('.')[0] + ".avi")
         self.back_video = cv2.VideoCapture(path.split('.')[0] + "_Rear.avi")
 
@@ -28,9 +30,11 @@ class GUI:
         self.current_timestamp = 0
         self.is_playing = True
 
-        """ADMA variable"""
+        """ADMA variables"""
         self.adma_index = 0
         self.adma_dataset = adma_dataset
+        self.adma_data = None
+        self.adma_car_data = None
 
         self.screen = pygame.display.set_mode((1280, 720))
         self.width = self.screen.get_width()
@@ -66,8 +70,6 @@ class GUI:
         self.car = CarObject(self.screen, M2PX)
 
         self.detected_objects = []
-        self.adma_data = None
-        self.adma_car_data = None
 
         self.clock = pygame.time.Clock()
 
@@ -113,7 +115,7 @@ class GUI:
 
         current_time = time.time() - self.start_time
 
-        """Update display data"""
+        """Updates displayed data based on the current time and the timestamp of the data"""
         if (self.current_index < len(self.obj_pools)) and current_time >= self.obj_pools[self.current_index].t \
                 and self.is_playing:
             while self.current_index < len(self.obj_pools) - 1:
@@ -127,11 +129,15 @@ class GUI:
             for obj in self.obj_pools[self.current_index].list:
                 if obj.life > 75:
                     self.detected_objects.append(DetectedObject(self.screen, obj, self.m2px))
+
+                    """Check if the detected object is in the car's blind spots and set the warnings if necessary"""
                     if GUIConstants.LEFT_BLIND_SPOT_X <= obj.dx <= GUIConstants.LEFT_BLIND_SPOT_X + GUIConstants.BLIND_SPOT_WIDTH:
                         if GUIConstants.LEFT_BLIND_SPOT_Y >= obj.dy >= GUIConstants.LEFT_BLIND_SPOT_Y - GUIConstants.BLIND_SPOT_HEIGHT:
                             self.dashboard.warn_left = True
                         if GUIConstants.RIGHT_BLIND_SPOT_Y >= obj.dy >= GUIConstants.RIGHT_BLIND_SPOT_Y - GUIConstants.BLIND_SPOT_HEIGHT:
                             self.dashboard.warn_right = True
+
+                    """Check for the adma car in the detected objects"""
                     if self.adma_data:
                         if distance(self.adma_data.dx, self.adma_data.dy, obj.dx, obj.dy) < 10:
                             self.adma_car_data = obj
@@ -149,10 +155,12 @@ class GUI:
                     self.adma_index += 1
             self.adma_data = self.adma_dataset[self.adma_index]
 
+        """Draw the car and the detected objects"""
         self.car.draw(self.m2px)
         for detected_obj in self.detected_objects:
             detected_obj.draw()
 
+        """Draw the dashboard of the GUI with the warning indicator, the user buttons and the data table."""
         pygame.draw.rect(self.screen, Colors.WHITE, pygame.Rect(0, 500, 1280, 220))
         self.play_btn.draw()
         self.pause_btn.draw()
@@ -171,13 +179,13 @@ class GUI:
             self.data_table.draw_value(2, 4, self.adma_car_data.vy)
         self.dashboard.draw()
 
+        """Display the provided video feeds, front and rear camera"""
         self.front_video.set(cv2.CAP_PROP_POS_MSEC, round(self.current_timestamp * 1000, 0))
         success, img = self.front_video.read()
         if success:
             img = img[0:250, 340:640]
             shape = img.shape[1::-1]
             self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"), (980, 0))
-
         self.back_video.set(cv2.CAP_PROP_POS_MSEC, round(self.current_timestamp * 1000, 0))
         success, img = self.back_video.read()
         if success:
@@ -186,10 +194,11 @@ class GUI:
             self.screen.blit(pygame.image.frombuffer(img.tobytes(), shape, "BGR"),
                              (980, 250 + GUIConstants.BUTTON_MARGIN // 2))
 
+        """Draw the color table of the detected objects and the sign of the coordinate system"""
         image = pygame.transform.scale(pygame.image.load("res/obj_colors.png"), (200, 250))
         self.screen.blit(image, pygame.Rect(0, 0, 200, 250))
-
         image = pygame.transform.scale(pygame.image.load("res/coordinates.png"), (50, 50))
         self.screen.blit(image, pygame.Rect(10, 440, 50, 50))
+
         self.clock.tick(120)
         pygame.display.update()

@@ -1,27 +1,16 @@
 import copy
 import math
-from model import *
 from data_handler import *
 
-# from gui import*
-
-
-# Thresholds
-# MATCH_DIST_TSH = 0.5
-# MATCH_VEL_TSH = 0.5
-# FULL_LIFE = 10
-# MAX_RANGE = 500
 MATCH_DIST_TSH = 10
 MATCH_VEL_TSH = 100
 FULL_LIFE = 100
 MAX_RANGE = 65
 DEAD_RANGE = 6
 
-ESTIMATE_VAR = 1000
-MEASUREMENT_VAR = 100
-
 
 class Object:
+    """Contains the state of a detected object"""
     def __init__(self, object_type, dx, dy, vx, vy, ax, ay):
         self.type = object_type
         self.dx = dx
@@ -33,6 +22,7 @@ class Object:
         self.life = FULL_LIFE / 2
 
     def add_measurement(self, dx, dy, vx, vy, ax=None, ay=None):
+        """Adds a new measurement data to the object, with which a new state is estimated"""
         k = 0.5
         if ax is None:
             ax = self.ax
@@ -48,6 +38,7 @@ class Object:
         self.life += 5
 
     def is_dead(self):
+        """Returns 1 if the object considered 'dead' because it has not been detected for a while."""
         if self.life <= 0:
             return 1
         else:
@@ -55,6 +46,7 @@ class Object:
 
 
 class ObjectPool:
+    """Stores the detected objects between iterations"""
     def __init__(self, t):
         self.list = []
         self.t = t
@@ -68,6 +60,7 @@ class ObjectPool:
                 self.list.remove(obj)
 
     def predict(self, next_t, vehicle_data: VehicleData):
+        """Predicts the state of the objects"""
         """ Kinematics """
         self.delta_t = next_t - self.t
         delta_fi = self.delta_t * vehicle_data.yaw_rate
@@ -95,6 +88,7 @@ def distance(x1, y1, x2, y2):
 
 
 def match(sensor, obj):
+    """Returns 1 if the measured object and the stored object is closer than the threshold const"""
     if distance(sensor.dx, sensor.dy, obj.dx, obj.dy) < MATCH_DIST_TSH:
         return 1
     else:
@@ -102,9 +96,11 @@ def match(sensor, obj):
 
 
 def update(sensor_data: SensorData, objects: ObjectPool):
+    """Updates the object pool based on the measured data, adds the new objects and updates the existing ones"""
     objects.t = sensor_data.t
     objects_copy = copy.deepcopy(objects.list)
 
+    """Check corner data objects"""
     for i, obj in enumerate(objects_copy):
         for corner in sensor_data.corner_data:
             match_list = []
@@ -126,15 +122,8 @@ def update(sensor_data: SensorData, objects: ObjectPool):
                                                 match_list[min_index].vy,
                                                 match_list[min_index].ax,
                                                 match_list[min_index].ay)
-                # objects.list[i].dx = match_list[min_index].dx
-                # objects.list[i].dy = match_list[min_index].dy
-                # objects.list[i].vx = match_list[min_index].vx
-                # objects.list[i].vy = match_list[min_index].vy
-                # objects.list[i].ax = match_list[min_index].ax
-                # objects.list[i].ay = match_list[min_index].ay
-                # objects.list[i].life += 5
 
-    """Check corner data objects"""
+    """Add new corner data objects"""
     for corner in sensor_data.corner_data:
         for corner_obj in corner:
             matched = False
@@ -147,6 +136,7 @@ def update(sensor_data: SensorData, objects: ObjectPool):
                     Object(None, corner_obj.dx, corner_obj.dy, corner_obj.vx, corner_obj.vy,
                            corner_obj.ax, corner_obj.ay))
 
+    """Check camera objects"""
     for i, obj in enumerate(objects_copy):
         match_list = []
         for camera_obj in sensor_data.camera_data:
@@ -169,7 +159,7 @@ def update(sensor_data: SensorData, objects: ObjectPool):
             objects.list[i].vy = match_list[min_index].vy
             objects.list[i].life += 5
 
-    """Check camera objects"""
+    """Add new camera objects"""
     for camera_obj in sensor_data.camera_data:
         matched = False
         for obj in objects_copy:
@@ -186,4 +176,5 @@ def update(sensor_data: SensorData, objects: ObjectPool):
 
 
 def synced_vehicle_data(index, host_vehicle_dataset: list[VehicleData]):
+    """Returns the host vehicle data with adjusted indices"""
     return host_vehicle_dataset[index // 2]

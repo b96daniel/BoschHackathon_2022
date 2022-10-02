@@ -5,7 +5,7 @@ column_index_macros.py
 Column index global macros for .CSV detection
 
 """
-## Host vehicle cs
+# Host vehicle csv
 
 HOST_TS = 0
 HOST_AX = 1
@@ -15,7 +15,7 @@ HOST_TABS = 4
 HOST_VX = 5
 HOST_VY = 6
 
-## Sensor dataset csv
+# Sensor dataset csv
 SENSOR_TS = 0
 CAM_TS = 1
 CAM_0_DX = 2

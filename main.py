@@ -13,7 +13,7 @@ if __name__ == '__main__':
     object_pool = ObjectPool(sensor_data.t)
     object_pool_list = []
 
-    # Loop for prediction steps
+    # Loop for estimation and prediction steps
     for i in range(len(sensor_dataset) - 1):
         update(sensor_dataset[i], object_pool)
         next_t = sensor_dataset[i + 1].t
@@ -23,6 +23,7 @@ if __name__ == '__main__':
         object_pool_list.append(copy.deepcopy(object_pool))
         print(str(i) + "/" + str(len(sensor_dataset)) + " processed")
 
+    # Initialize GUI
     try:
         gui = GUI(object_pool_list, adma_dataset, DATASET_RELATIVE_PATH)
         while True:

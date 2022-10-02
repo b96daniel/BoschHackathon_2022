@@ -4,8 +4,7 @@ from gui_constants import GUIConstants
 
 
 class Button:
-    """Button class"""
-
+    """Button GUI element class"""
     def __init__(self, screen, text, gui_pos):
         self.screen = screen
         self.gui_pos = gui_pos
@@ -19,5 +18,6 @@ class Button:
         self.rect = pygame.Rect(self.gui_pos[0], self.gui_pos[1], GUIConstants.BUTTON_WIDTH, GUIConstants.BUTTON_HEIGHT)
 
     def draw(self):
+
         self.screen.blit(self.surface, self.gui_pos)
         pygame.draw.rect(self.screen, Colors.LIGHTGREY, self.rect, 1)

@@ -116,7 +116,6 @@ class DetectedObject:
         elif self.object.type == ObjType.PEDESTRIAN.value:
             color = Colors.PEDESTRIAN_COLOR
         pygame.draw.circle(self.screen, color, self.gui_pos, radius=10)
-        # self.draw_text(self.gui_pos[0], self.gui_pos[1], str((round(self.real_pos[0], 2), round(self.real_pos[1], 2))))
 
     def draw_text(self, x, y, msg):
         """Draws a message into the cell"""

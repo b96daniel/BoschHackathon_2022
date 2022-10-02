@@ -16,6 +16,7 @@ RADAR_OBJ_MAX_SIZE = 10
 RADAR_PROB_OBSTACLE_THRESHOLD = 0.8
 
 
+# Filters the camera data dataframe
 def filter_camera_data(row, obj_id, camera_dataset):
     if row[CAM_0_OBJ + obj_id] != ObjType.NONE.value:
         camera_dataset.append(CameraData(dx=row[CAM_0_DX + obj_id], dy=row[CAM_0_DY + obj_id],
@@ -24,6 +25,7 @@ def filter_camera_data(row, obj_id, camera_dataset):
     return camera_dataset
 
 
+# Filters the radar data dataframe
 def filter_radar_data(row, radar_id, obj_id, radar_dataset):
     if row[RADAR_0_0_PROB + radar_id + obj_id * RADAR_SIZE] > RADAR_PROB_OBSTACLE_THRESHOLD:
         radar_dataset.append(CornerData(
