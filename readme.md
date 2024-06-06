@@ -1,6 +1,8 @@
 # Code Like A Bosch 2022 Hackathon - Software Development Challenge
 
+Official page of the event: https://hackathon.boschevent.hu/2022/
 This project contains our solution for the software development challenge.
+Challange description, documentation and presentation can be found in the doc folder. 
 
 ## Installation
 
